@@ -4,7 +4,7 @@ Django settings for the AI Society Simulation platform.
 A real-time, multi-agent ecosystem where autonomous LLM agents converse inside
 groups while a human "God/Admin" monitors and intervenes.
 
-Stack: Django + Django Channels (ASGI/WebSockets) + PostgreSQL + Redis + Celery.
+Stack: Django + Django Channels (ASGI/WebSockets) + SQLite + Redis + Celery.
 """
 
 import os
@@ -85,16 +85,15 @@ TEMPLATES = [
 WSGI_APPLICATION = "aisociety.wsgi.application"
 ASGI_APPLICATION = "aisociety.asgi.application"
 
-# ── Database ─────────────────────────────────────────────────────────────────
+# ── Database (SQLite — simple, file-based, zero-config) ──────────────────────
+# Path is overridable via SQLITE_PATH; defaults to <BASE_DIR>/db.sqlite3.
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB", "ai_society"),
-        "USER": os.getenv("POSTGRES_USER", "ai_society"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "ai_society"),
-        "HOST": os.getenv("POSTGRES_HOST", "localhost"),
-        "PORT": os.getenv("POSTGRES_PORT", "5432"),
-        "CONN_MAX_AGE": 60,
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.getenv("SQLITE_PATH", str(BASE_DIR / "db.sqlite3")),
+        # Wait up to 20s if the file is briefly locked by another writer
+        # (SQLite allows a single writer at a time).
+        "OPTIONS": {"timeout": 20},
     }
 }
 

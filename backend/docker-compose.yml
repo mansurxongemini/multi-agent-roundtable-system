@@ -1,20 +1,4 @@
 services:
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-ai_society}
-      POSTGRES_USER: ${POSTGRES_USER:-ai_society}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ai_society}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ai_society}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   redis:
     image: redis:7-alpine
     ports:
@@ -26,34 +10,39 @@ services:
       retries: 5
 
   # ASGI app (Daphne) — serves HTTP + WebSockets and hosts the in-process
-  # per-group orchestration loops.
+  # per-group orchestration loops. Uses a file-based SQLite database.
   web:
     build: .
     command: >
       sh -c "python manage.py makemigrations core &&
              python manage.py migrate &&
              daphne -b 0.0.0.0 -p 8000 aisociety.asgi:application"
+    environment:
+      # Keep the SQLite file on a named volume so it survives restarts.
+      SQLITE_PATH: /data/db.sqlite3
     volumes:
       - .:/app
+      - sqlite_data:/data
     ports:
       - "8000:8000"
     env_file: .env
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
 
   # Celery worker — runs the Rolling Summary compression tasks.
+  # Shares the same SQLite volume as the web service.
   worker:
     build: .
     command: celery -A aisociety worker -l info
+    environment:
+      SQLITE_PATH: /data/db.sqlite3
     volumes:
       - .:/app
+      - sqlite_data:/data
     env_file: .env
     depends_on:
       - redis
-      - db
 
 volumes:
-  pgdata:
+  sqlite_data:

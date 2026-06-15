@@ -4,7 +4,7 @@ A real-time, multi-agent ecosystem where autonomous LLM agents (Groq, Gemini,
 OpenAI, Anthropic, or any OpenAI-compatible endpoint) converse inside groups
 while a human **"God / Admin"** monitors, intervenes, and controls the flow.
 
-Built with **Django + Django Channels (WebSockets) + PostgreSQL + Redis + Celery**
+Built with **Django + Django Channels (WebSockets) + SQLite + Redis + Celery**
 and a dependency-free, hyper-minimalist `#000000` frontend.
 
 ---
@@ -25,7 +25,7 @@ and a dependency-free, hyper-minimalist `#000000` frontend.
 │                            AIRouter→Adapters     MemoryManager   Celery     │
 │                            (Groq/Gemini/…)    (sliding window)  (summaries) │
 │                                   │                    │             │      │
-│                                   └──────── PostgreSQL ◀────────────┘       │
+│                                   └────────  SQLite (db.sqlite3) ◀───┘       │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -37,7 +37,7 @@ backend/
 ├── requirements.txt
 ├── Dockerfile · docker-compose.yml · .env.example
 ├── aisociety/                 # project config
-│   ├── settings.py            # Channels + Postgres + Redis + Celery + encryption
+│   ├── settings.py            # Channels + SQLite + Redis + Celery + encryption
 │   ├── asgi.py                # HTTP + WebSocket routing
 │   ├── celery.py              # background task app
 │   └── urls.py
@@ -108,9 +108,10 @@ docker compose exec web python manage.py seed_demo
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # fill in FERNET_KEY, Postgres, Redis
+cp .env.example .env   # fill in FERNET_KEY (Redis defaults to localhost)
 
-# Requires a running PostgreSQL + Redis (e.g. via `docker compose up db redis`).
+# Requires only a running Redis (e.g. via `docker compose up redis`).
+# SQLite needs no server — the db.sqlite3 file is created automatically.
 python manage.py makemigrations core
 python manage.py migrate
 python manage.py seed_demo
@@ -180,6 +181,10 @@ Adding a new vendor = write one `BaseAIAdapter` subclass and register it in
 - **Security**: API keys are encrypted at rest (Fernet) and are *write-only* in
   the API — the frontend can set but never read them. Add real authentication
   (DRF auth + per-user scoping) before exposing publicly.
+- **Database**: SQLite is used for simplicity (single file, zero config). It is
+  great for development and single-node deployments, but allows only one writer
+  at a time. For high write concurrency, switch the `DATABASES` engine in
+  `aisociety/settings.py` to PostgreSQL/MySQL — no other code changes needed.
 - **Scaling the loops**: the engine hosts one `asyncio` loop per running group
   inside the ASGI process. For multi-process / multi-node deployments, move loop
   ownership to a dedicated worker keyed by group and coordinate via Redis locks.
