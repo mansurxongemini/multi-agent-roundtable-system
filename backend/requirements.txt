@@ -1,0 +1,28 @@
+# ── Core framework ───────────────────────────────────────────────
+Django==5.0.6
+djangorestframework==3.15.1
+django-cors-headers==4.3.1
+
+# ── Realtime / ASGI ──────────────────────────────────────────────
+channels==4.1.0
+channels-redis==4.2.0
+daphne==4.1.2
+
+# ── Async background orchestration / summarization ───────────────
+celery==5.4.0
+redis==5.0.4
+
+# ── Database ─────────────────────────────────────────────────────
+# SQLite is built into Python's stdlib — no extra driver needed.
+
+# ── HTTP client for provider adapters (async) ────────────────────
+httpx==0.27.0
+
+# ── Secrets / API-key encryption at rest ─────────────────────────
+cryptography==42.0.7
+
+# ── Token accounting for sliding-window memory ───────────────────
+tiktoken==0.7.0
+
+# ── Config ───────────────────────────────────────────────────────
+python-dotenv==1.0.1

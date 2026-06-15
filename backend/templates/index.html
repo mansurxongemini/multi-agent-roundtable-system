@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Society Simulation</title>
+  <link rel="stylesheet" href="{% static 'style.css' %}" />
+</head>
+<body>
+  <!-- ───────────────────────── Sidebar: rooms ───────────────────────── -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span>AI&nbsp;SOCIETY</span>
+    </div>
+
+    <div class="side-section">
+      <div class="side-head">
+        <span>Rooms</span>
+        <button class="ghost-btn" id="newGroupBtn" title="New room">+</button>
+      </div>
+      <ul id="groupList" class="group-list"></ul>
+    </div>
+
+    <div class="side-section">
+      <div class="side-head"><span>Admin</span></div>
+      <button class="side-link" id="manageProvidersBtn">Providers &amp; Keys</button>
+      <button class="side-link" id="manageAgentsBtn">Agents</button>
+    </div>
+
+    <div class="side-foot">God / Admin console</div>
+  </aside>
+
+  <!-- ───────────────────────── Main: live room ──────────────────────── -->
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 id="roomName">Select a room</h1>
+        <span class="topic" id="roomTopic"></span>
+      </div>
+      <div class="topbar-right">
+        <span class="status-pill" id="statusPill">idle</span>
+        <button class="ctrl" id="startBtn" disabled>Start</button>
+        <button class="ctrl" id="pauseBtn" disabled>Pause</button>
+        <button class="ctrl danger" id="stopBtn" disabled>Stop</button>
+      </div>
+    </header>
+
+    <!-- Agent roster + per-agent God-Mode controls -->
+    <section class="agent-row" id="agentRow"></section>
+
+    <!-- Realtime conversation stream -->
+    <section class="chat" id="chat"></section>
+
+    <!-- Human intervention -->
+    <footer class="composer">
+      <input type="text" id="humanInput"
+             placeholder="Speak as ADMIN / GOD — agents react instantly…"
+             autocomplete="off" disabled />
+      <button class="ctrl" id="sendBtn" disabled>Inject</button>
+    </footer>
+  </main>
+
+  <!-- ───────────────────────── Modals ───────────────────────────────── -->
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal" id="modal"></div>
+  </div>
+
+  <script src="{% static 'app.js' %}"></script>
+</body>
+</html>

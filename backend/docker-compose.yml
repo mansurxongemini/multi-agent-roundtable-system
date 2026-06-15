@@ -1,0 +1,48 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ASGI app (Daphne) — serves HTTP + WebSockets and hosts the in-process
+  # per-group orchestration loops. Uses a file-based SQLite database.
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py makemigrations core &&
+             python manage.py migrate &&
+             daphne -b 0.0.0.0 -p 8000 aisociety.asgi:application"
+    environment:
+      # Keep the SQLite file on a named volume so it survives restarts.
+      SQLITE_PATH: /data/db.sqlite3
+    volumes:
+      - .:/app
+      - sqlite_data:/data
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # Celery worker — runs the Rolling Summary compression tasks.
+  # Shares the same SQLite volume as the web service.
+  worker:
+    build: .
+    command: celery -A aisociety worker -l info
+    environment:
+      SQLITE_PATH: /data/db.sqlite3
+    volumes:
+      - .:/app
+      - sqlite_data:/data
+    env_file: .env
+    depends_on:
+      - redis
+
+volumes:
+  sqlite_data:
